@@ -1,5 +1,7 @@
+import 'package:Ludus/dto/response/user_responseDTO.dart';
+import 'package:Ludus/service/auth_service.dart';
+import 'package:Ludus/service/home_service.dart';
 import 'package:Ludus/service/login_service.dart';
-import 'package:Ludus/views/teste.dart';
 import 'package:flutter/material.dart';
 import 'package:Ludus/views/home_page.dart';
 import 'package:Ludus/views/cadastro_p1_page.dart';
@@ -12,7 +14,8 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   LoginService _loginService = new LoginService();
-
+  HomeService homeService = new HomeService();
+  AuthService authService = new AuthService();
   TextEditingController _emailController = TextEditingController();
   TextEditingController _senhaController = TextEditingController();
 
@@ -24,8 +27,15 @@ class _LoginPageState extends State<LoginPage> {
     if (_formKey.currentState!.validate()) {
       if (await _loginService.validarCredenciais(
           _emailController.text, _senhaController.text)) {
+        List<UserResponseDTO> users = await homeService.buscarUsuarios();
+        UserResponseDTO userLogado =
+            await authService.getUserFromSharedPreferences();
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => Teste()),
+          MaterialPageRoute(
+              builder: (context) => HomePage(
+                    usersList: users,
+                    userLogado: userLogado,
+                  )),
           (route) => false, // Remove todas as rotas anteriores
         );
       } else {

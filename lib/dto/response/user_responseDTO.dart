@@ -14,24 +14,15 @@ class UserResponseDTO {
   late String _foto;
 
   UserResponseDTO(Map<String, dynamic> json) {
-    _id:
-    json['id'] ?? 0;
-    _nome:
-    json['nome'] ?? '';
-    _idade:
-    json['idade'] ?? 0;
-    _descricao:
-    json['descricao'] ?? '';
-    _dataCadastro:
-    json['dataCadastro'] != null ? DateTime.parse(json['dataCadastro']) : null;
-    _id_curso:
-    json['curso']['id'];
-    _curso:
-    json['curso']['nome'];
-    _descricao_curso:
-    json['curso']['descricao'];
-    _foto:
-    json['foto']['imagem'];
+    _id = int.parse(json['id'].toString());
+    _nome = json['nome'];
+    _idade = int.parse(json['idade'].toString());
+    _descricao = json['descricao'];
+    _dataCadastro = DateTime.parse(json['dataCadastro']);
+    _id_curso = int.parse(json['curso']['id'].toString());
+    _curso = json['curso']['nome'];
+    _descricao_curso = json['curso']['nome'];
+    _foto = json['foto']['imagem'];
   }
 
   int getId() {
@@ -66,9 +57,14 @@ class UserResponseDTO {
     return this._descricao_curso;
   }
 
+  String getFotoBase64() {
+    return this._foto;
+  }
+
   File getFotoWithPath() {
     Uint8List bytes = Uint8List.fromList(base64.decode(this._foto));
-    File tempFile = File('${Directory.systemTemp.path}/temp_image.jpg');
+    String tempFileName = 'temp_image_${this.hashCode}.jpg';
+    File tempFile = File('${Directory.systemTemp.path}/$tempFileName');
     tempFile.writeAsBytesSync(bytes);
     return tempFile;
   }
@@ -76,5 +72,20 @@ class UserResponseDTO {
   File getFotoWithObject() {
     Uint8List bytes = Uint8List.fromList(base64.decode(this._foto));
     return File.fromRawPath(bytes);
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': _id,
+      'nome': _nome,
+      'idade': _idade,
+      'descricao': _descricao,
+      'dataCadastro': _dataCadastro
+          .toIso8601String(), // Converte DateTime para String no formato ISO 8601
+      'id_curso': _id_curso,
+      'curso': _curso,
+      'descricao_curso': _descricao_curso,
+      'foto': _foto,
+    };
   }
 }

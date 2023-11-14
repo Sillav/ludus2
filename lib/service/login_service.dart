@@ -1,16 +1,22 @@
-import 'dart:convert';
-import 'package:Ludus/entity/user_entity.dart';
+import 'package:Ludus/dto/response/user_responseDTO.dart';
 import 'package:Ludus/repository/user_repository.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:Ludus/service/auth_service.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class LoginService {
+  AuthService authService = new AuthService();
+  UserRepository userRepository = new UserRepository();
+
   Future<bool> validarCredenciais(String email, String senha) async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    UserRepository userRepository = new UserRepository();
     String token = await userRepository.gerarToken(email, senha);
     if (token == 'ERRO') {
       return false;
     } else {
+      await authService.salvarTokenSharedPreferences(token);
+      Map<String, dynamic> decodeJWT = JwtDecoder.decode(token);
+      UserResponseDTO userLogado =
+          await userRepository.buscarUsuario(decodeJWT['pessoa_id']);
+      await authService.salvarUsuarioSharedPreferences(userLogado);
       return true;
     }
   }

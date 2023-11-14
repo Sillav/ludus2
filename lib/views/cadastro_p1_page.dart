@@ -1,6 +1,7 @@
 import 'package:Ludus/service/cadastro_service.dart';
 import 'package:flutter/material.dart';
 import 'package:Ludus/views/cadastro_p2_page.dart';
+import 'package:flutter/services.dart';
 import 'package:outline_gradient_button/outline_gradient_button.dart';
 
 class CadastroPassoUm extends StatefulWidget {
@@ -34,6 +35,18 @@ class _CadastroPassoUmState extends State<CadastroPassoUm> {
     } else {
       print("FORM INVÁLIDO");
     }
+  }
+
+  @override
+  void initState() {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.dark,
+      //statusBarColor:
+      systemNavigationBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Color(0xFF0F141E),
+    ));
+    super.initState();
   }
 
   @override

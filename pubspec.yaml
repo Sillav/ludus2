@@ -39,6 +39,15 @@ dependencies:
   shared_preferences: ^2.2.1
   badges: ^3.1.2
   dio: ^5.3.3
+  carousel_slider: ^4.2.1
+  flutter_carousel_widget: ^2.1.2
+  side_sheet: ^1.0.4
+  jwt_decoder: ^2.0.1
+  firebase_core: ^2.22.0
+  firebase_database: ^10.3.3
+  intl: ^0.18.1
+  timezone: ^0.9.2
+  cloud_firestore: ^4.13.0
 
 dev_dependencies:
   flutter_test:

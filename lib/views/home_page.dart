@@ -1,84 +1,71 @@
-import 'dart:convert';
-
+import 'dart:io';
+import 'package:Ludus/dto/response/user_responseDTO.dart';
+import 'package:Ludus/service/auth_service.dart';
+import 'package:Ludus/service/home_service.dart';
+import 'package:Ludus/views/chat_initial_page.dart';
 import 'package:flutter/material.dart';
-import 'package:Ludus/entity/user_entity.dart';
 import 'package:outline_gradient_button/outline_gradient_button.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter_carousel_widget/flutter_carousel_widget.dart';
+import 'package:side_sheet/side_sheet.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final List<UserResponseDTO> usersList;
+  final UserResponseDTO userLogado;
+
+  const HomePage(
+      {super.key, required this.usersList, required this.userLogado});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+  AuthService authService = new AuthService();
+
+  List<UserResponseDTO> users = [];
+
+  CarouselController carouselController = CarouselController();
+
+  HomeService homeService = new HomeService();
+
+  int currentIndex = 0;
+
+  late UserResponseDTO userLogado;
+
   @override
-  int _currentIndex = 0;
-  List<String> images = ["assets/images/foto3.jpg", "assets/images/foto2.jpg"];
-  final List _lastMessage = ['hello'];
-
-  List<UserEntity> users = [];
-
-  PageController _pageController = PageController();
-
-  /*
-
-  Future<List<UserEntity>> getUsers() async {
-    var url = Uri.parse("https://ludust.duckdns.org/api/pessoas/all");
-    var response = await http.get(url, headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-      'Authorization':
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0b2tlbiIsInN1YiI6Imd1aWxoZXJtZWFjYWFhYWFhQGdtYWlsLmNvbSIsImV4cCI6MTY5NTM0MTc3OH0.stSrAtarlq4apiD80DIwbUHNO_beG4Yvo41SaToqKB8'
-    });
-    List<dynamic> jsonList = json.decode(response.body);
-    List<Map<String, dynamic>> jsonListCast =
-        jsonList.cast<Map<String, dynamic>>();
-    List<UserEntity> users =
-        jsonListCast.map((json) => UserEntity.fromJson(json)).toList();
-    print(users[0].nome);
-    return users;
+  void initState() {
+    userLogado = widget.userLogado;
+    users = widget.usersList;
+    super.initState();
   }
 
-  */
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  void _previousImage() {
-    if (_currentIndex > 0) {
-      setState(() {
-        _currentIndex--;
-        _pageController.previousPage(
-          duration: Duration(milliseconds: 300),
-          curve: Curves.ease,
-        );
-        print("anterior: $_currentIndex");
-      });
-    }
-  }
+  void _showBottomSheet(BuildContext context) async {
+    String remetente_id = userLogado.getId().toString();
 
-  void _nextImage() {
-    if (_currentIndex < images.length - 1) {
-      setState(() {
-        _currentIndex++;
-        _pageController.nextPage(
-          duration: Duration(milliseconds: 300),
-          curve: Curves.ease,
-        );
-        print("proxima: $_currentIndex");
-      });
-    }
-  }
+    String destinatario_id = users[currentIndex].getId().toString();
 
-  void _showBottomSheet(BuildContext context) {
+    var euCurti = await homeService.verificarMinhasCurtidas(
+        remetente_id, destinatario_id);
+
+    var meCurtiu = await homeService.verificarOutrasCurtidas(
+        remetente_id, destinatario_id);
+
+    var match =
+        await homeService.verificarMeusMatchs(remetente_id, destinatario_id);
+
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Color.fromARGB(255, 34, 42, 58),
       builder: (context) {
         return ClipRRect(
           borderRadius: BorderRadius.vertical(top: Radius.circular(30.0)),
           child: Container(
-            color: Color(0xFF0F141E),
+            color: Color.fromARGB(255, 34, 42, 58),
             child: Padding(
-              padding: const EdgeInsets.all(25),
+              padding: const EdgeInsets.only(
+                  right: 25, left: 25, bottom: 25, top: 20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -86,53 +73,147 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Align(
                     alignment: Alignment.center,
-                    child: Text(
-                      "Nome, 23",
+                    child: RichText(
+                        text: TextSpan(
+                      text: users[currentIndex].getNome(),
                       style: TextStyle(
-                          fontSize: 30,
-                          color: Colors.yellow,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  SizedBox(height: 25),
-                  Text(
-                    "Sobre mim",
-                    style: TextStyle(
-                        fontSize: 20,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    "Texto sobre mim",
-                    style: TextStyle(fontSize: 20, color: Colors.white),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    "Área do curso",
-                    style: TextStyle(
-                        fontSize: 20,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.bottomLeft,
-                    child: OutlineGradientButton(
-                      child: Text(
-                        "Engenharia",
-                        style: TextStyle(fontSize: 15, color: Colors.white),
+                        color: Color.fromARGB(255, 251, 230, 45),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 25,
+                        fontFamily: 'Lexend',
                       ),
-                      gradient: LinearGradient(
-                          colors: [Colors.white, Colors.white, Colors.white]),
-                      strokeWidth: 1,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                      radius: Radius.circular(12),
-                      onTap: () {},
+                      children: [
+                        TextSpan(
+                            text: ", ",
+                            style: TextStyle(
+                              fontSize: 25,
+                              color: Colors.white,
+                              fontFamily: 'Lexend',
+                            )),
+                        TextSpan(
+                            text: users[currentIndex].getIdade().toString(),
+                            style: TextStyle(
+                              fontSize: 25,
+                              color: Colors.white,
+                              fontFamily: 'Lexend',
+                            )),
+                      ],
+                    )),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 15),
+                    child: Text(
+                      "Sobre mim",
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Lexend',
+                      ),
                     ),
                   ),
-                  SizedBox(height: 60),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 5),
+                    child: Text(
+                      users[currentIndex].getDescricao(),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                          fontFamily: 'Lexend'),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 15),
+                    child: Text(
+                      "Área do curso",
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Lexend',
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 5),
+                    child: Align(
+                      alignment: Alignment.bottomLeft,
+                      child: OutlineGradientButton(
+                        child: Text(
+                          users[currentIndex].getDescricaoCurso(),
+                          style: TextStyle(
+                              fontSize: 9,
+                              color: Colors.white,
+                              fontFamily: 'Lexend'),
+                        ),
+                        gradient: LinearGradient(
+                            colors: [Colors.white, Colors.white, Colors.white]),
+                        strokeWidth: 1,
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                        radius: Radius.circular(12),
+                        onTap: () async {},
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 25),
+                    child: Center(
+                      child: OutlineGradientButton(
+                        child: ShaderMask(
+                          shaderCallback: (Rect bounds) {
+                            return LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Colors.red, Colors.orange],
+                            ).createShader(bounds);
+                          },
+                          child: (match)
+                              ? Icon(
+                                  Icons.chat,
+                                  color: Colors.white,
+                                  size: 22,
+                                )
+                              : (euCurti)
+                                  ? Icon(
+                                      Icons.check,
+                                      color: Colors.white,
+                                      size: 22,
+                                    )
+                                  : (meCurtiu)
+                                      ? Icon(
+                                          Icons.thumb_up,
+                                          color: Colors.white,
+                                          size: 22,
+                                        )
+                                      : Icon(
+                                          Icons.thumb_up,
+                                          color: Colors.white,
+                                          size: 22,
+                                        ),
+                        ),
+                        gradient: LinearGradient(
+                            colors: [Colors.red, Colors.orange, Colors.yellow]),
+                        strokeWidth: 2,
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                        radius: Radius.circular(50),
+                        onTap: () async {
+                          if (match) {
+                            //NAVEGA PARA O CHAT
+                          } else {
+                            if (euCurti) {
+                              //BLOQUEIA BOTÃO DE CHECK
+                            }
+                            if (meCurtiu) {
+                              //PERMITE AINDA BOTÃO DE TE CURTIU COM MENSSAGEM TE CURTIU
+                            }
+                          }
+                          //PERMITE BOTÃO DE TE CURTIU
+                        },
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -148,169 +229,497 @@ class _HomePageState extends State<HomePage> {
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          PageView.builder(
-            controller: _pageController,
-            itemCount: images.length,
-            onPageChanged: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            itemBuilder: (context, index) {
-              return Image.asset(
-                images[index],
-                fit: BoxFit.cover,
-                width: double.infinity,
-              );
-            },
-          ),
           Center(
             child: Container(
               color: Colors.transparent,
               padding: EdgeInsets.only(top: 60),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(right: 20),
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: GestureDetector(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: ShaderMask(
-                                  shaderCallback: (Rect bounds) {
-                                    return LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [Colors.red, Colors.orange],
-                                    ).createShader(bounds);
+            ),
+          ),
+          FlutterCarousel(
+              options: CarouselOptions(
+                controller: carouselController,
+                height: MediaQuery.of(context).size.height,
+                viewportFraction: 1.0,
+                enlargeCenterPage: false,
+                autoPlay: false,
+                enableInfiniteScroll: true,
+                autoPlayInterval: const Duration(seconds: 2),
+                showIndicator: false,
+                onPageChanged: (index, reason) {
+                  setState(() {
+                    currentIndex = index;
+                  });
+                },
+              ),
+              items: users
+                  .map((user) => Container(
+                        child: Center(
+                            child: Image.file(
+                          user.getFotoWithPath(),
+                          fit: BoxFit.cover,
+                          height: MediaQuery.of(context).size.height,
+                        )),
+                      ))
+                  .toList()),
+          Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: 70, right: 25),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: GestureDetector(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Padding(
+                            padding:
+                                const EdgeInsets.only(right: 8, bottom: 15),
+                            child: ShaderMask(
+                                shaderCallback: (Rect bounds) {
+                                  return LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [Colors.red, Colors.orange],
+                                  ).createShader(bounds);
+                                },
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    List<int> matchs =
+                                        await homeService.getUsersMatch();
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) => ChatInitialPage(
+                                                userLogado: userLogado,
+                                                listMatchs: matchs)));
                                   },
                                   child: Icon(
-                                    Icons.notifications_active,
+                                    Icons.chat_rounded,
                                     color: Colors.white,
-                                    size: 55,
+                                    size: 40,
                                   ),
-                                )),
-                            SizedBox(width: 10),
-                            Container(
-                              height: 80,
-                              width: 80,
-                              decoration: const BoxDecoration(
-                                  gradient: LinearGradient(colors: [
-                                    Colors.red,
-                                    Colors.orange,
-                                    Colors.yellow,
-                                  ]),
-                                  shape: BoxShape.circle),
-                              child: Padding(
-                                //this padding will be you border size
-                                padding: const EdgeInsets.all(3.0),
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                      color: Colors.grey,
-                                      shape: BoxShape.circle),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(2.0),
-                                    child: const CircleAvatar(
-                                      backgroundColor: Colors.white,
-                                      foregroundImage: AssetImage(
-                                          "assets/images/careca.jpg"),
+                                ))),
+                        SizedBox(width: 10),
+                        GestureDetector(
+                          onTap: () => SideSheet.right(
+                            context: context,
+                            sheetBorderRadius: 25,
+                            width: MediaQuery.of(context).size.width * 0.85,
+                            body: Container(
+                              decoration: BoxDecoration(
+                                  color: Color.fromARGB(255, 34, 42, 58),
+                                  borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(25),
+                                      bottomLeft: Radius.circular(25))),
+                              child: Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 80),
+                                    child: Container(
+                                      height: 110,
+                                      width: 110,
+                                      decoration: const BoxDecoration(
+                                          gradient: LinearGradient(colors: [
+                                            Colors.red,
+                                            Colors.orange,
+                                            Colors.yellow,
+                                          ]),
+                                          shape: BoxShape.circle),
+                                      child: Padding(
+                                        //this padding will be you border size
+                                        padding: EdgeInsets.all(3.0),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                              color: Colors.grey,
+                                              shape: BoxShape.circle),
+                                          child: Padding(
+                                            padding: EdgeInsets.all(2.0),
+                                            child: CircleAvatar(
+                                                backgroundColor: Colors.white,
+                                                foregroundImage: Image.file(
+                                                        userLogado
+                                                            .getFotoWithPath())
+                                                    .image),
+                                          ),
+                                        ),
+                                      ),
                                     ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 40),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 50),
+                                          child: Icon(
+                                            Icons.home_outlined,
+                                            color: Colors.white,
+                                            size: 30,
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 12),
+                                          child: Text(
+                                            "Início",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 25,
+                                                fontFamily: 'Lexend'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 10),
+                                    child: Divider(
+                                      color: Colors.white,
+                                      height: 2.5,
+                                      thickness: 2,
+                                      indent: 50,
+                                      endIndent: 0,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 40),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 50),
+                                          child: Icon(
+                                            Icons.person_outline,
+                                            color: Colors.white,
+                                            size: 30,
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 12),
+                                          child: Text(
+                                            "Perfil",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 25,
+                                                fontFamily: 'Lexend'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 10),
+                                    child: Divider(
+                                      color: Colors.white,
+                                      height: 2.5,
+                                      thickness: 2,
+                                      indent: 50,
+                                      endIndent: 0,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 40),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 50),
+                                          child: Icon(
+                                            Icons.help_outline_outlined,
+                                            color: Colors.white,
+                                            size: 30,
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 12),
+                                          child: Text(
+                                            "Ajuda",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 25,
+                                                fontFamily: 'Lexend'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 10),
+                                    child: Divider(
+                                      color: Colors.white,
+                                      height: 2.5,
+                                      thickness: 2,
+                                      indent: 50,
+                                      endIndent: 0,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 40),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 50),
+                                          child: Icon(
+                                            Icons.settings_outlined,
+                                            color: Colors.white,
+                                            size: 30,
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 12),
+                                          child: Text(
+                                            "Configurações",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 25,
+                                                fontFamily: 'Lexend'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 10),
+                                    child: Divider(
+                                      color: Colors.white,
+                                      height: 2.5,
+                                      thickness: 2,
+                                      indent: 50,
+                                      endIndent: 0,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 40),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 50),
+                                          child: Icon(
+                                            Icons.lock_outline,
+                                            color: Colors.white,
+                                            size: 30,
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 12),
+                                          child: Text(
+                                            "Segurança",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 25,
+                                                fontFamily: 'Lexend'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 10),
+                                    child: Divider(
+                                      color: Colors.white,
+                                      height: 2.5,
+                                      thickness: 2,
+                                      indent: 50,
+                                      endIndent: 0,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 135),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(right: 12),
+                                          child: Icon(
+                                            Icons.logout_outlined,
+                                            color: Colors.red,
+                                            size: 30,
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(right: 35),
+                                          child: Text(
+                                            "Sair",
+                                            style: TextStyle(
+                                                color: Colors.red,
+                                                fontSize: 25,
+                                                fontFamily: 'Lexend'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          child: Container(
+                            height: 80,
+                            width: 80,
+                            decoration: const BoxDecoration(
+                                gradient: LinearGradient(colors: [
+                                  Colors.red,
+                                  Colors.orange,
+                                  Colors.yellow,
+                                ]),
+                                shape: BoxShape.circle),
+                            child: Padding(
+                              //this padding will be you border size
+                              padding: EdgeInsets.all(3.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                    color: Colors.grey, shape: BoxShape.circle),
+                                child: Padding(
+                                  padding: EdgeInsets.all(2.0),
+                                  child: CircleAvatar(
+                                    backgroundColor: Colors.white,
+                                    foregroundImage:
+                                        Image.file(userLogado.getFotoWithPath())
+                                            .image,
                                   ),
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(top: 220, right: 5),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.arrow_back_ios_rounded,
-                            color: Colors.grey.shade400,
-                            size: 40,
                           ),
-                          onPressed: _previousImage,
-                        ),
-                        SizedBox(width: 270),
-                        IconButton(
-                          icon: Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            color: Colors.grey.shade400,
-                            size: 40,
-                          ),
-                          onPressed: _nextImage,
                         ),
                       ],
                     ),
                   ),
-                  Padding(
-                      padding: EdgeInsets.only(top: 200),
-                      child: RichText(
-                          text: TextSpan(
-                        text: "Thiago",
-                        style: TextStyle(
-                            color: Colors.yellow.shade700,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 30),
-                        children: [
-                          TextSpan(
-                              text: ", 21",
-                              style: TextStyle(color: Colors.white))
-                        ],
-                      ))),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 36),
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: OutlineGradientButton(
-                        child: ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [Colors.red, Colors.orange],
-                            ).createShader(bounds);
-                          },
-                          child: Icon(
-                            Icons.thumb_up,
-                            color: Colors.white,
-                            size: 25,
-                          ),
-                        ),
-                        gradient: LinearGradient(
-                            colors: [Colors.red, Colors.orange, Colors.yellow]),
-                        strokeWidth: 3,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 22, vertical: 22),
-                        radius: Radius.circular(50),
-                        onTap: () async {
-                          _showBottomSheet(context);
-                        },
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
+              Padding(
+                  padding: EdgeInsets.only(top: 500),
+                  child: RichText(
+                      text: TextSpan(
+                    text: users[currentIndex].getNome(),
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 251, 230, 45),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 30,
+                      fontFamily: 'Lexend',
+                    ),
+                    children: [
+                      TextSpan(
+                          text: ", ",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Lexend',
+                          )),
+                      TextSpan(
+                          text: users[currentIndex].getIdade().toString(),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Lexend',
+                          )),
+                    ],
+                  ))),
+              Padding(
+                padding: const EdgeInsets.only(top: 30),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: OutlineGradientButton(
+                    child: ShaderMask(
+                        shaderCallback: (Rect bounds) {
+                          return LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.red, Colors.orange],
+                          ).createShader(bounds);
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.circle,
+                              color: Colors.white,
+                              size: 10,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4, right: 4),
+                              child: Icon(
+                                Icons.circle,
+                                color: Colors.white,
+                                size: 10,
+                              ),
+                            ),
+                            Icon(
+                              Icons.circle,
+                              color: Colors.white,
+                              size: 10,
+                            ),
+                          ],
+                        )),
+                    gradient: LinearGradient(
+                        colors: [Colors.red, Colors.orange, Colors.yellow]),
+                    strokeWidth: 2,
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 30),
+                    radius: Radius.circular(50),
+                    onTap: () async {
+                      _showBottomSheet(context);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios_rounded,
+                    color: Colors.grey.shade400,
+                    size: 40,
+                  ),
+                  onPressed: () => carouselController.previousPage(
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.linear),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: Colors.grey.shade400,
+                    size: 40,
+                  ),
+                  onPressed: () => carouselController.nextPage(
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.linear),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
   }
 }

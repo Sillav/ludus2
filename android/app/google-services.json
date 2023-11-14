@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "501055105865",
+    "project_id": "luduschat-9fa7e",
+    "storage_bucket": "luduschat-9fa7e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:501055105865:android:c37833bced9448ffd28898",
+        "android_client_info": {
+          "package_name": "com.example.ludus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZyIBqdwU_lbO45V_Jb6ACocZgxjCcSXE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
