@@ -255,6 +255,7 @@ class UserRepository {
       FormData formData = FormData.fromMap({
         'nome': userRequestDTO.getNome(),
         'idade': userRequestDTO.getIdade().toString(),
+        'descricao': userRequestDTO.getDescricao(),
         'email': userRequestDTO.getEmail(),
         'senha': userRequestDTO.getSenha(),
         'cursoId': userRequestDTO.getIdCurso().toString(),
@@ -265,7 +266,7 @@ class UserRepository {
       Response response =
           await dio.post("$_urlBase/api/pessoas/new", data: formData);
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         print('Dados enviados com sucesso');
         return response.data;
       } else {

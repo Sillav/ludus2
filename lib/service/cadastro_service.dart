@@ -6,7 +6,7 @@ class CadastroService {
     if (nome.length == 0) {
       return "O campo não pode ser vazio!";
     }
-    if (nome.length > 15) {
+    if (nome.length > 20) {
       return "O nome deve conter no máximo 15 caracteres!";
     }
     return true;

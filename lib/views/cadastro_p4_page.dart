@@ -64,7 +64,8 @@ class _CadastroPassoQuatroState extends State<CadastroPassoQuatro> {
   pickImageFromGallery() async {
     try {
       final ImagePicker imagePicker = ImagePicker();
-      final image = await imagePicker.pickImage(source: ImageSource.gallery);
+      final image = await imagePicker.pickImage(
+          source: ImageSource.gallery, imageQuality: 14);
       if (image == null) return;
       final imageTemporary = File(image.path);
       setState(() => this._image = imageTemporary);
